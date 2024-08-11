@@ -47,6 +47,9 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    androidResources {
+        noCompress += "tflite"
+    }
 }
 
 dependencies {
@@ -72,4 +75,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.lifecycle.runtime.compose)
+
+    implementation(libs.tensorflow.lite.task.vision)
+    implementation(libs.tensorflow.lite.gpu.delegate.plugin)
+    implementation(libs.tensorflow.lite.gpu)
 }
