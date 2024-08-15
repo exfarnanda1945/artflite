@@ -1,4 +1,4 @@
-package com.exfarnanda1945.artflite
+package com.exfarnanda1945.artflite.od
 
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
