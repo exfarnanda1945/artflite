@@ -1,4 +1,4 @@
-package com.exfarnanda1945.artflite
+package com.exfarnanda1945.artflite.od
 
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
