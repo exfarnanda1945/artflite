@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.exfarnanda1945.artflite"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -79,4 +79,6 @@ dependencies {
     implementation(libs.tensorflow.lite.task.vision)
     implementation(libs.tensorflow.lite.gpu.delegate.plugin)
     implementation(libs.tensorflow.lite.gpu)
+
+    implementation("io.github.sceneview:arsceneview:2.2.1")
 }
