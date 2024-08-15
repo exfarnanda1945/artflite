@@ -15,6 +15,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.exfarnanda1945.artflite.ar.ArScreen
+import com.exfarnanda1945.artflite.od.CameraPreviewScreen
 import com.exfarnanda1945.artflite.ui.theme.ArtfliteTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,7 +55,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding), contentAlignment = Alignment.Center
                     ) {
-                        CameraPreviewScreen(isCameraGranted = cameraIsGranted)
+                        ArScreen()
                     }
                 }
             }
