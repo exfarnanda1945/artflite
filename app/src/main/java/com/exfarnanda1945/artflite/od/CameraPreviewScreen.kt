@@ -4,6 +4,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,10 +25,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.sceneview.Scene
+import io.github.sceneview.math.Position
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.rememberCameraManipulator
+import io.github.sceneview.rememberCameraNode
+import io.github.sceneview.rememberEngine
+import io.github.sceneview.rememberModelLoader
+import io.github.sceneview.rememberNode
+import io.github.sceneview.rememberOnGestureListener
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun CameraPreviewScreen(isCameraGranted: StateFlow<Boolean>, modifier: Modifier = Modifier) {
+fun CameraPreviewScreen(
+    isCameraGranted: StateFlow<Boolean>,
+    modifier: Modifier = Modifier
+) {
     val cameraPermission by isCameraGranted.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
@@ -56,6 +69,16 @@ fun CameraPreviewScreen(isCameraGranted: StateFlow<Boolean>, modifier: Modifier 
                 ContextCompat.getMainExecutor(context), imageAnalyzer
             )
         }
+    }
+
+    val engine = rememberEngine()
+    val modelLoader = rememberModelLoader(engine = engine)
+    val centerNode = rememberNode(engine)
+    val cameraNode = rememberCameraNode(engine) {
+        position = Position(x = 0f, y = -0.5f, z = 2.0f)
+        lookAt(centerNode)
+
+        centerNode.addChildNode(this)
     }
 
     if (cameraPermission) {
@@ -94,6 +117,36 @@ fun CameraPreviewScreen(isCameraGranted: StateFlow<Boolean>, modifier: Modifier 
 
                     }
                 }
+                Scene(
+                    modifier = Modifier.fillMaxSize()
+                        .background(Color.Transparent),
+                    engine = engine,
+                    isOpaque = false,
+                    modelLoader = modelLoader,
+                    cameraNode = cameraNode,
+                    cameraManipulator = rememberCameraManipulator(
+                        orbitHomePosition = cameraNode.worldPosition,
+                        targetPosition = centerNode.worldPosition
+                    ),
+                    childNodes = listOf(
+                        centerNode,
+                        ModelNode(
+                            modelInstance = modelLoader.createModelInstance(
+                                assetFileLocation = "models/t-shirt_and_pant.glb"
+                            )
+                        )
+                    ),
+                    onFrame = {
+                        cameraNode.lookAt(centerNode)
+                    },
+                    onGestureListener = rememberOnGestureListener(
+                        onDoubleTap = { _, node ->
+                            node?.apply {
+                                scale *= 2.0f
+                            }
+                        }
+                    )
+                )
             }
             classifications.forEach { item ->
                 Text(text = "name :" + item.name)
