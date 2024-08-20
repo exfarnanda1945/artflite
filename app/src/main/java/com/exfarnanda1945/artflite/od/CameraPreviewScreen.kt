@@ -1,10 +1,10 @@
 package com.exfarnanda1945.artflite.od
 
+import android.util.Log
+import androidx.camera.core.CameraSelector
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,13 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,8 +63,10 @@ fun CameraPreviewScreen(
             setImageAnalysisAnalyzer(
                 ContextCompat.getMainExecutor(context), imageAnalyzer
             )
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         }
     }
+
 
     val engine = rememberEngine()
     val modelLoader = rememberModelLoader(engine = engine)
@@ -81,9 +78,11 @@ fun CameraPreviewScreen(
         centerNode.addChildNode(this)
     }
 
+    Log.d("classification", classifications.toString())
+
     if (cameraPermission) {
         Column(modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize(0.9f)) {
+            Box(modifier = Modifier.fillMaxSize()) {
                 AndroidView(modifier = modifier.fillMaxSize(), factory = { ctx ->
                     PreviewView(ctx).apply {
                         scaleType = PreviewView.ScaleType.FILL_START
@@ -93,60 +92,66 @@ fun CameraPreviewScreen(
                 }, onRelease = {
                     cameraController.unbind()
                 })
-                classifications.forEach { item ->
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val rectColor = Color.Red
-                        val rectThickness = 4.dp.toPx()
-                        val top = item.boundingBox.top * item.scaleFactor(size.width, size.height)
-                        val left = item.boundingBox.left * item.scaleFactor(size.width, size.height)
-                        val right =
-                            item.boundingBox.right * item.scaleFactor(size.width, size.height)
-                        val bottom =
-                            item.boundingBox.bottom * item.scaleFactor(size.width, size.height)
+                val person = classifications.find { item -> item.name.lowercase() == "person" }
+                if (person != null) {
+                    Scene(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        engine = engine,
+                        isOpaque = false,
+                        modelLoader = modelLoader,
+                        cameraNode = cameraNode,
+                        cameraManipulator = rememberCameraManipulator(
+                            orbitHomePosition = cameraNode.worldPosition,
+                            targetPosition = centerNode.worldPosition
+                        ),
+                        childNodes = listOf(
+                            centerNode,
+                            ModelNode(
+                                modelInstance = modelLoader.createModelInstance(
+                                    assetFileLocation = "models/t-shirt_and_pant.glb",
+                                ),
 
 
-                        drawRect(
-                            color = rectColor,
-                            topLeft = Offset(left, top),
-                            size = Size(
-                                right - left,
-                                bottom - top
-                            ),
-                            style = Stroke(rectThickness)
-                        )
-
-                    }
-                }
-                Scene(
-                    modifier = Modifier.fillMaxSize()
-                        .background(Color.Transparent),
-                    engine = engine,
-                    isOpaque = false,
-                    modelLoader = modelLoader,
-                    cameraNode = cameraNode,
-                    cameraManipulator = rememberCameraManipulator(
-                        orbitHomePosition = cameraNode.worldPosition,
-                        targetPosition = centerNode.worldPosition
-                    ),
-                    childNodes = listOf(
-                        centerNode,
-                        ModelNode(
-                            modelInstance = modelLoader.createModelInstance(
-                                assetFileLocation = "models/t-shirt_and_pant.glb"
-                            )
-                        )
-                    ),
-                    onFrame = {
-                        cameraNode.lookAt(centerNode)
-                    },
-                    onGestureListener = rememberOnGestureListener(
-                        onDoubleTap = { _, node ->
-                            node?.apply {
-                                scale *= 2.0f
+                                )
+                        ),
+                        onFrame = {
+                            cameraNode.lookAt(centerNode)
+                        },
+                        onGestureListener = rememberOnGestureListener(
+                            onDoubleTap = { _, node ->
+                                node?.apply {
+                                    scale *= 2.0f
+                                }
                             }
-                        }
+                        ),
+
                     )
-                )
+                }
+//                classifications.forEach { item ->
+//                    Canvas(modifier = Modifier.fillMaxSize()) {
+//                        val rectColor = Color.Red
+//                        val rectThickness = 4.dp.toPx()
+//                        val top = item.boundingBox.top * item.scaleFactor(size.width, size.height)
+//                        val left = item.boundingBox.left * item.scaleFactor(size.width, size.height)
+//                        val right =
+//                            item.boundingBox.right * item.scaleFactor(size.width, size.height)
+//                        val bottom =
+//                            item.boundingBox.bottom * item.scaleFactor(size.width, size.height)
+//
+//
+//                        drawRect(
+//                            color = rectColor,
+//                            topLeft = Offset(left, top),
+//                            size = Size(
+//                                right - left,
+//                                bottom - top
+//                            ),
+//                            style = Stroke(rectThickness)
+//                        )
+//
+//                    }
+//                }
             }
             classifications.forEach { item ->
                 Text(text = "name :" + item.name)
