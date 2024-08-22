@@ -15,8 +15,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +32,7 @@ import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberNode
 import io.github.sceneview.rememberOnGestureListener
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.math.sqrt
 
 @Composable
 fun CameraPreviewScreen(
@@ -79,40 +82,56 @@ fun CameraPreviewScreen(
         centerNode.addChildNode(this)
     }
 
+    var boxWrapperSize by remember { mutableStateOf(IntSize.Zero) }
+
     Log.d("classification", classifications.toString())
 
     if (cameraPermission) {
         Column(modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                AndroidView(modifier = modifier.fillMaxSize(), factory = { ctx ->
-                    PreviewView(ctx).apply {
-                        scaleType = PreviewView.ScaleType.FILL_START
-                        implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                        controller = cameraController
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned {
+                    boxWrapperSize = it.size
+                }) {
+                AndroidView(
+                    modifier = modifier
+                        .fillMaxSize(),
+                    factory = { ctx ->
+                        PreviewView(ctx).apply {
+                            scaleType = PreviewView.ScaleType.FILL_START
+                            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                            controller = cameraController
+                        }
+                    },
+                    onRelease = {
+                        cameraController.unbind()
                     }
-                }, onRelease = {
-                    cameraController.unbind()
-                })
+                )
                 val person = classifications.find { item -> item.name.lowercase() == "person" }
                 if (person != null) {
+                    val boundingBox = getBoundingBox(person, boxWrapperSize)
+                    val paddingStart = boundingBox.left
+                    val paddingTop = boundingBox.top
+                    val sceneWidth = boundingBox.right - boundingBox.left
+                    val sceneHeight = boundingBox.bottom - boundingBox.top
+
                     Scene(
-                        modifier = Modifier
-                            .fillMaxSize(),
+                        modifier = Modifier.fillMaxSize(),
                         engine = engine,
                         isOpaque = false,
                         modelLoader = modelLoader,
                         cameraNode = cameraNode,
                         cameraManipulator = rememberCameraManipulator(
                             orbitHomePosition = cameraNode.worldPosition,
-                            targetPosition = centerNode.worldPosition,
-
+                            targetPosition = centerNode.worldPosition
                         ),
                         childNodes = listOf(
                             centerNode,
                             ModelNode(
                                 modelInstance = modelLoader.createModelInstance(
                                     assetFileLocation = "models/t-shirt_and_pant.glb",
-                                )
+                                ),
+                                scaleToUnits = getScaleModel(boxWrapperSize,sceneWidth,sceneHeight)
                             )
                         ),
                         onFrame = {
@@ -124,9 +143,8 @@ fun CameraPreviewScreen(
                                     scale *= 2.0f
                                 }
                             }
-                        ),
-
                         )
+                    )
                 }
 //                classifications.forEach { item ->
 //                    Canvas(modifier = Modifier.fillMaxSize()) {
@@ -164,3 +182,35 @@ fun CameraPreviewScreen(
 
 
 }
+
+fun getScaleModel(boxWrapperSize: IntSize, sceneWidth: Float, sceneHeight: Float): Float {
+    val heightScale = boxWrapperSize.height *1f / sceneHeight
+    val widthScale = boxWrapperSize.width * 1f/sceneWidth
+
+    val unitScale = sqrt(widthScale*heightScale)
+    return unitScale
+
+}
+
+fun getBoundingBox(item: Classification, size: IntSize): BoundingBoxSize {
+    val top = item.boundingBox.top * item.scaleFactor(size.width.toFloat(), size.height.toFloat())
+    val left = item.boundingBox.left * item.scaleFactor(size.width.toFloat(), size.height.toFloat())
+    val right =
+        item.boundingBox.right * item.scaleFactor(size.width.toFloat(), size.height.toFloat())
+    val bottom =
+        item.boundingBox.bottom * item.scaleFactor(size.width.toFloat(), size.height.toFloat())
+
+    return BoundingBoxSize(
+        top = top,
+        left = left,
+        right = right,
+        bottom = bottom
+    )
+}
+
+data class BoundingBoxSize(
+    val top: Float,
+    val left: Float,
+    val right: Float,
+    val bottom: Float
+)
