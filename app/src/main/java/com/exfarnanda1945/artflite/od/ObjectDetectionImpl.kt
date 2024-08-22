@@ -2,12 +2,10 @@ package com.exfarnanda1945.artflite.od
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.view.Surface
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.image.ops.Rot90Op
 import org.tensorflow.lite.task.core.BaseOptions
-import org.tensorflow.lite.task.core.vision.ImageProcessingOptions
 import org.tensorflow.lite.task.vision.detector.ObjectDetector
 import kotlin.math.max
 
@@ -44,19 +42,7 @@ class ObjectDetectionImpl(
         val imageProcessor = ImageProcessor.Builder().add(Rot90Op(-rotation / 90)).build()
         val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image))
 
-        val orientation = when (rotation) {
-            Surface.ROTATION_90 -> ImageProcessingOptions.Orientation.TOP_LEFT
-            Surface.ROTATION_180 -> ImageProcessingOptions.Orientation.RIGHT_BOTTOM
-            Surface.ROTATION_270 -> ImageProcessingOptions.Orientation.BOTTOM_RIGHT
-            else -> ImageProcessingOptions.Orientation.RIGHT_TOP
-
-        }
-
-        val imageProcessingOptions =
-            ImageProcessingOptions.builder().setOrientation(orientation).build()
         val result = detector?.detect(tensorImage)
-
-
         return result?.flatMap { item ->
             item.categories.map { category ->
                 Classification(

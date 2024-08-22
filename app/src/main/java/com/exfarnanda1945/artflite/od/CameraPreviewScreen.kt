@@ -45,6 +45,7 @@ fun CameraPreviewScreen(
         mutableStateOf(emptyList<Classification>())
     }
 
+
     val imageAnalyzer = remember {
         ImageAnalyzer(
             detector = ObjectDetectionImpl(
@@ -103,17 +104,16 @@ fun CameraPreviewScreen(
                         cameraNode = cameraNode,
                         cameraManipulator = rememberCameraManipulator(
                             orbitHomePosition = cameraNode.worldPosition,
-                            targetPosition = centerNode.worldPosition
+                            targetPosition = centerNode.worldPosition,
+
                         ),
                         childNodes = listOf(
                             centerNode,
                             ModelNode(
                                 modelInstance = modelLoader.createModelInstance(
                                     assetFileLocation = "models/t-shirt_and_pant.glb",
-                                ),
-
-
                                 )
+                            )
                         ),
                         onFrame = {
                             cameraNode.lookAt(centerNode)
@@ -126,7 +126,7 @@ fun CameraPreviewScreen(
                             }
                         ),
 
-                    )
+                        )
                 }
 //                classifications.forEach { item ->
 //                    Canvas(modifier = Modifier.fillMaxSize()) {

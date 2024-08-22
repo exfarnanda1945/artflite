@@ -1,7 +1,6 @@
 package com.exfarnanda1945.artflite.ar
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue

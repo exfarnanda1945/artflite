@@ -81,4 +81,5 @@ dependencies {
     implementation(libs.tensorflow.lite.gpu)
 
     implementation("io.github.sceneview:arsceneview:2.2.1")
+    implementation(kotlin("script-runtime"))
 }
