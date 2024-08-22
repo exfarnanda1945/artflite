@@ -7,12 +7,18 @@ class ImageAnalyzer(
     private val detector: ObjectDetection,
     private val onResult: (List<Classification>) -> Unit
 ) : ImageAnalysis.Analyzer {
-    override fun analyze(image: ImageProxy) {
-        val rotationDegree = image.imageInfo.rotationDegrees
-        val bitmap = image.toBitmap()
+    private var skipFrame = 0
 
-        val result = detector.detect(bitmap, rotationDegree)
-        onResult(result)
+    override fun analyze(image: ImageProxy) {
+        if (skipFrame % 30 == 0) {
+            val rotationDegree = image.imageInfo.rotationDegrees
+            val bitmap = image.toBitmap()
+
+            val result = detector.detect(bitmap, rotationDegree)
+            onResult(result)
+
+        }
+        skipFrame++
 
         image.close()
     }
