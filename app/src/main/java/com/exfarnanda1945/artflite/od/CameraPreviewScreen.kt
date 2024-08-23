@@ -25,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.sceneview.Scene
 import io.github.sceneview.math.Position
 import io.github.sceneview.node.ModelNode
-import io.github.sceneview.rememberCameraManipulator
 import io.github.sceneview.rememberCameraNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelLoader
@@ -74,13 +73,11 @@ fun CameraPreviewScreen(
 
     val engine = rememberEngine()
     val modelLoader = rememberModelLoader(engine = engine)
-    val centerNode = rememberNode(engine)
     val cameraNode = rememberCameraNode(engine) {
-        position = Position(x = 0f, y = -0.5f, z = 2.0f)
-        lookAt(centerNode)
-
-        centerNode.addChildNode(this)
+        Log.d("localposition", "${getLocalPosition(worldPosition)}")
+        position = Position(x = 0.0f, y = -1.0f, z = 4.0f)
     }
+    val centerNode = rememberNode(engine).addChildNode(cameraNode)
 
     var boxWrapperSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -121,17 +118,27 @@ fun CameraPreviewScreen(
                         isOpaque = false,
                         modelLoader = modelLoader,
                         cameraNode = cameraNode,
-                        cameraManipulator = rememberCameraManipulator(
-                            orbitHomePosition = cameraNode.worldPosition,
-                            targetPosition = centerNode.worldPosition
-                        ),
+//                        cameraManipulator = rememberCameraManipulator(
+//                            orbitHomePosition = cameraNode.worldPosition,
+//                            targetPosition = centerNode.worldPosition
+//                        ),
                         childNodes = listOf(
                             centerNode,
                             ModelNode(
                                 modelInstance = modelLoader.createModelInstance(
                                     assetFileLocation = "models/t-shirt_and_pant.glb",
                                 ),
-                                scaleToUnits = getScaleModel(boxWrapperSize,sceneWidth,sceneHeight)
+                                scaleToUnits = getScaleModel(
+                                    boxWrapperSize,
+                                    sceneWidth,
+                                    sceneHeight
+                                ),
+                                // -1 < 0, 0 = 0, 0 > 1
+                                centerOrigin = Position(
+                                    x = 0f,
+                                    y = 0f,
+                                    z = 0f
+                                ),
                             )
                         ),
                         onFrame = {
@@ -171,10 +178,6 @@ fun CameraPreviewScreen(
 //                    }
 //                }
             }
-            classifications.forEach { item ->
-                Text(text = "name :" + item.name)
-                Text(text = "score :" + item.score)
-            }
         }
     } else {
         Text(text = "Camera permission denied!")
@@ -184,10 +187,11 @@ fun CameraPreviewScreen(
 }
 
 fun getScaleModel(boxWrapperSize: IntSize, sceneWidth: Float, sceneHeight: Float): Float {
-    val heightScale = boxWrapperSize.height *1f / sceneHeight
-    val widthScale = boxWrapperSize.width * 1f/sceneWidth
+    val heightScale = boxWrapperSize.height * 1f / sceneHeight
+    val widthScale = boxWrapperSize.width * 1f / sceneWidth
 
-    val unitScale = sqrt(widthScale*heightScale)
+    val unitScale = sqrt(widthScale * heightScale)
+    Log.d("getScaleModel", unitScale.toString())
     return unitScale
 
 }
